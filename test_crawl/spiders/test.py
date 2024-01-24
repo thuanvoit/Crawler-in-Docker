@@ -11,7 +11,6 @@ import logging
 from fake_useragent import UserAgent
 
 warnings.filterwarnings("ignore", category=scrapy.exceptions.ScrapyDeprecationWarning)
-# logging.getLogger('scrapy').propagate = False
 
 db_path = "/mydb/test.db"
 
@@ -67,6 +66,14 @@ class Database:
         conn.close()
         return row
     
+    def get_last_row(self, table_name):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM {} ORDER BY id DESC LIMIT 1".format(table_name))
+        row = cursor.fetchone()
+        conn.close()
+        return row
+    
     def close(self):
         conn = sqlite3.connect(self.db_path)
         conn.close()
@@ -104,8 +111,9 @@ class Database:
                      id INTEGER PRIMARY KEY AUTOINCREMENT,
                      url TEXT,
                      new_url_found INTEGER,
+                     crawled INTEGER,
                      to_be_crawled INTEGER,
-                     keywords INTEGER,
+                     total_keywords INTEGER,
                      download_latency REAL DEFAULT 0,
                     start_time DATETIME DEFAULT CURRENT_TIMESTAMP,
                     end_time DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -171,12 +179,14 @@ class YourSpider(scrapy.Spider):
                 "end_time": end_time,
                 "duration": duration,
                 "to_be_crawled": db.get_num_rows("to_be_crawled"),
-                "keywords": len(keywords),
+                "total_keywords": db.get_num_rows("keywords"),
+                "crawled": db.get_num_rows("pages"),
             })
         except sqlite3.IntegrityError:
             pass
 
         return
+    
 
     def extract_keywords(self, response):
 
@@ -223,11 +233,6 @@ class YourSpider(scrapy.Spider):
 if __name__ == '__main__':
     import subprocess
 
-    # nltk.download('stopwords')
-    # nltk.download('punkt')
-    # nltk.download('wordnet')
-    # nltk.download('popular')
-
     db = Database(db_path)
     db.create_db_table()
     # Insert initial data
@@ -239,19 +244,21 @@ if __name__ == '__main__':
         while db.get_first("to_be_crawled"):
             subprocess.run(["scrapy", "crawl", "test_crawl", "--logfile", "/mydb/log.log"])
 
-            # write logging to txt
-
-            
             subprocess.run(['clear'])
-            
-            print("Number of pages in all_pages: {}".format(db.get_num_rows("all_pages")))
-            print("Number of pages crawled: {}".format(db.get_num_rows("pages")))
-            print("Number of pages to be crawled: {}".format(db.get_num_rows("to_be_crawled")))
-            print("Number of keywords extracted: {}".format(db.get_num_rows("keywords")))
-            print("Size of database: {} KB".format(os.path.getsize(db_path) / 1000.0))
 
+            last_row = db.get_last_row("statistics")
+
+            print("========================================")
             # show database path in the os
-            print(os.path.abspath(db_path))
+            print(f"Database path: {os.path.abspath(db_path)}")
+            print(f"Size of database: {os.path.getsize(db_path) / 1000.0} KB")
+
+            print("========================================")
+
+            print(f"Number of pages crawled: {last_row[3]}")
+            print(f"Number of pages to be crawled: {last_row[4]}")
+            print(f"Number of keywords extracted: {last_row[5]}")
+            print("========================================")
 
     except KeyboardInterrupt:
         print("Process interrupted by user.")
