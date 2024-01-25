@@ -12,9 +12,10 @@ RUN mkdir -p /app/mydb \
 
 VOLUME /app/mydb
 
-COPY requirements.txt requirements.txt
-RUN pip3 install -r requirements.txt
-
 COPY . /app
 
-CMD ["python3", "/app/test_crawl/spiders/test.py"]
+RUN pip3 install -r requirements.txt
+
+# RUN python3 installer.py
+
+CMD ["python3", "./test_crawl/spiders/test.py"]

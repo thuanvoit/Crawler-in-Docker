@@ -46,11 +46,12 @@ docker run -it test_crawler:latest
 ```bash
 ========================================
 Database path: /app/mydb/test.db
-Size of database: 106.496 KB
+Size of database: 1163.264 KB
 ========================================
-Number of pages crawled: 1
-Number of pages to be crawled: 150
-Number of keywords extracted: 40
+Number of URLs found: 738
+Number of URLs crawled: 43
+Number of URLs to be crawled: 693
+Number of keywords extracted: 9824
 ========================================
 ```
 
