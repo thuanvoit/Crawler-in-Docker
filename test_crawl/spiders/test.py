@@ -12,14 +12,10 @@ from fake_useragent import UserAgent
 
 warnings.filterwarnings("ignore", category=scrapy.exceptions.ScrapyDeprecationWarning)
 
-db_path = "/mydb/test.db"
+db_path = "/app/mydb/test.db"
 
 class Database:
     def __init__(self, db_path):
-        self.DEFAULT = {
-            "pages": ["url", "downloadLatency"],
-            "keywords": ["url", "keyword"]
-        }
         self.db_path = db_path
 
 
@@ -122,7 +118,7 @@ class Database:
         conn.commit()
         conn.close()
 
-class YourSpider(scrapy.Spider):
+class Spider(scrapy.Spider):
     name = 'test_crawl'
     first_parse = True
 
@@ -145,7 +141,13 @@ class YourSpider(scrapy.Spider):
     def parse(self, response):
         db = Database(db_path)
 
-        links = LinkExtractor(allow_domains=['appleinsider.com'], unique=True).extract_links(response)
+        links = LinkExtractor(
+            allow_domains=['appleinsider.com'], 
+            allow=[
+                r'https:\/\/appleinsider.com.*',
+                r'https:\/\/www.appleinsider.com.*'
+                ],
+            unique=True).extract_links(response)
 
         links = set(link.url for link in links)
 
@@ -242,7 +244,7 @@ if __name__ == '__main__':
 
     try:
         while db.get_first("to_be_crawled"):
-            subprocess.run(["scrapy", "crawl", "test_crawl", "--logfile", "/mydb/log.log"])
+            subprocess.run(["scrapy", "crawl", "test_crawl", "--logfile", "/app/mydb/log.log"])
 
             subprocess.run(['clear'])
 

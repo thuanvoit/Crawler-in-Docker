@@ -1,65 +1,65 @@
-# Project Title
+# Crawler
 
-Simple overview of use/purpose.
+A simple crawler is running based on open-source Python library, namely Scrapy.
 
 ## Description
 
-An in-depth paragraph about your project and overview of use.
+This Crawler only focuses on [appleinsider.com](https://appleinsider.com).
 
 ## Getting Started
 
 ### Dependencies
 
-- Describe any prerequisites, libraries, OS version, etc., needed before installing program.
-- ex. Windows 10
+- Docker
+- Sqlite3
+- Python
+  - Scrapy
+  - Fake-Agent
+  - rake_nltk
 
 ### Installing
 
-- How/where to download your program
-- Any modifications needed to be made to files/folders
+1. Since this program is running in Docker, use this link [https://docker.com](https://docs.docker.com/get-docker/) to download Docker for your OS.
+
+2. Go to directory `Crawler-in-Docker` in HW1 folder. You should see a list of folder and file, a file named `Dockerfile` is used to build docker image.
+   3
+   . On your Terminal or Commandline, run the following to build. Allow a few minutes to download dependencies and keyword extractor library.
+
+```bash
+docker build -t test_crawler:latest .
+```
+
+Where `test_crawler:latest` is image name and its tag.
+
+4. Open Docker Dashboard to check if the build image is ready.
 
 ### Executing program
 
-- How to run the program
-- Step-by-step bullets
+- On your Terminal or Commandline, run the following to run:
 
-```
-code blocks for commands
-```
-
-## Help
-
-Any advise for common problems or issues.
-
-```
-command to run if program contains helper info
+```bash
+docker run -it test_crawler:latest
 ```
 
-## Authors
+- The output should look like:
 
-Contributors names and contact info
+```bash
+========================================
+Database path: /app/mydb/test.db
+Size of database: 106.496 KB
+========================================
+Number of pages crawled: 1
+Number of pages to be crawled: 150
+Number of keywords extracted: 40
+========================================
+```
 
-ex. Dominique Pizzie  
-ex. [@DomPizzie](https://twitter.com/dompizzie)
+### Obtain the database
 
-## Version History
+1. Open Docker Desktop, on tab Volumes, there is a created volume to store the database.
 
-- 0.2
-  - Various bug fixes and optimizations
-  - See [commit change]() or See [release history]()
-- 0.1
-  - Initial Release
+2. Right click on the `test.db`, press on Save As and pick the location where you would like to store the result database on your machine.
 
-## License
+## Demo
 
-This project is licensed under the [NAME HERE] License - see the LICENSE.md file for details
-
-## Acknowledgments
-
-Inspiration, code snippets, etc.
-
-- [awesome-readme](https://github.com/matiassingers/awesome-readme)
-- [PurpleBooth](https://gist.github.com/PurpleBooth/109311bb0361f32d87a2)
-- [dbader](https://github.com/dbader/readme-template)
-- [zenorocha](https://gist.github.com/zenorocha/4526327)
-- [fvcproductions](https://gist.github.com/fvcproductions/1bfc2d4aecb01a834b46)
+## Discussions
