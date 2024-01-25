@@ -23,8 +23,8 @@ class Database:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         cursor.execute("INSERT INTO {} ({}) VALUES ({})"
-                       .format(table_name, ",".join(data.keys()), ","
-                               .join(["?"]*len(data))), list(data.values()))
+                    .format(table_name, ",".join(data.keys()), ","
+                            .join(["?"]*len(data))), list(data.values()))
         conn.commit()
         conn.close()
 
@@ -84,17 +84,17 @@ class Database:
                 CREATE TABLE IF NOT EXISTS all_pages (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 url TEXT NOT NULL UNIQUE
-             );''')
+            );''')
         conn.execute('''
                 CREATE TABLE IF NOT EXISTS to_be_crawled (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 url TEXT NOT NULL UNIQUE
-             );''')
+            );''')
         conn.execute('''
                 CREATE TABLE IF NOT EXISTS pages (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 url TEXT NOT NULL UNIQUE
-             );''')
+            );''')
         conn.execute('''
             CREATE TABLE IF NOT EXISTS keywords (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -103,14 +103,15 @@ class Database:
             );
         ''')
         conn.execute('''
-                     CREATE TABLE IF NOT EXISTS statistics(
-                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                     url TEXT,
-                     new_url_found INTEGER,
-                     crawled INTEGER,
-                     to_be_crawled INTEGER,
-                     total_keywords INTEGER,
-                     download_latency REAL DEFAULT 0,
+                    CREATE TABLE IF NOT EXISTS statistics(
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    url TEXT,
+                    new_url_found INTEGER,
+                    total_new_url_found INTEGER,
+                    crawled INTEGER,
+                    to_be_crawled INTEGER,
+                    total_keywords INTEGER,
+                    download_latency REAL DEFAULT 0,
                     start_time DATETIME DEFAULT CURRENT_TIMESTAMP,
                     end_time DATETIME DEFAULT CURRENT_TIMESTAMP,
                     duration REAL DEFAULT 0
@@ -176,6 +177,7 @@ class Spider(scrapy.Spider):
             db.insert("statistics", {
                 "url": response.url,
                 "new_url_found": len(links),
+                "total_new_url_found": db.get_num_rows("all_pages"),
                 "download_latency": download_latency,
                 "start_time": start_time,
                 "end_time": end_time,
