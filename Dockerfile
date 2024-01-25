@@ -1,7 +1,3 @@
-# syntax=docker/dockerfile:1
-
-# FROM ubuntu:22.04
-
 FROM python:3.9
 
 WORKDIR /app
@@ -16,6 +12,6 @@ COPY . /app
 
 RUN pip3 install -r requirements.txt
 
-# RUN python3 installer.py
+RUN python3 installer.py
 
 CMD ["python3", "./test_crawl/spiders/test.py"]

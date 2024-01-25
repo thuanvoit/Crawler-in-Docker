@@ -10,8 +10,6 @@ import datetime
 import logging
 from fake_useragent import UserAgent
 
-nltk.data.path = ["/app/nltk_data"]
-
 warnings.filterwarnings("ignore", category=scrapy.exceptions.ScrapyDeprecationWarning)
 
 db_path = "/app/mydb/test.db"
@@ -198,7 +196,7 @@ class Spider(scrapy.Spider):
 
         text = self.extract_article(response)
 
-        self.start_time = datetime.datetime.now()
+        extra_start_time = datetime.datetime.now()
 
         data = []
 
@@ -216,13 +214,13 @@ class Spider(scrapy.Spider):
             r.extract_keywords_from_text(text)
             data = r.get_ranked_phrases()
 
-        self.end_time = datetime.datetime.now()
+        extra_end_time = datetime.datetime.now()
 
         return {
             "keywords": data,
-            "duration": (self.end_time - self.start_time).total_seconds(),
-            "start_time": self.start_time,
-            "end_time": self.end_time,
+            "duration": (extra_end_time - extra_start_time).total_seconds(),
+            "start_time": extra_start_time,
+            "end_time": extra_end_time,
         }
     
     def extract_meta_keywords(self, response):
@@ -240,11 +238,13 @@ if __name__ == '__main__':
     import subprocess
 
     db = Database(db_path)
+
+    # comment out below lines if you want to resume the crawler
     db.create_db_table()
-    # Insert initial data
     db.insert("to_be_crawled", {"url": "https://www.appleinsider.com"})
     db.insert("all_pages", {"url": "https://www.appleinsider.com"})
     db.close()
+    # cmment out above lines if you want to resume the crawler
 
     print("\033c", end="")
 
