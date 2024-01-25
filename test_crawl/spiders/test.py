@@ -259,9 +259,10 @@ if __name__ == '__main__':
 
             print("========================================")
 
-            print(f"Number of pages crawled: {last_row[3]}")
-            print(f"Number of pages to be crawled: {last_row[4]}")
-            print(f"Number of keywords extracted: {last_row[5]}")
+            print(f"Number of URLs found: {last_row[3]}")
+            print(f"Number of URLs crawled: {last_row[4]}")
+            print(f"Number of URLs to be crawled: {last_row[5]}")
+            print(f"Number of keywords extracted: {last_row[6]}")
             print("========================================")
 
     except KeyboardInterrupt:
