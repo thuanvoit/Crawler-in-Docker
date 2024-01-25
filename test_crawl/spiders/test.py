@@ -10,6 +10,8 @@ import datetime
 import logging
 from fake_useragent import UserAgent
 
+nltk.data.path = ["/app/nltk_data"]
+
 warnings.filterwarnings("ignore", category=scrapy.exceptions.ScrapyDeprecationWarning)
 
 db_path = "/app/mydb/test.db"
@@ -244,11 +246,13 @@ if __name__ == '__main__':
     db.insert("all_pages", {"url": "https://www.appleinsider.com"})
     db.close()
 
+    print("\033c", end="")
+
     try:
         while db.get_first("to_be_crawled"):
             subprocess.run(["scrapy", "crawl", "test_crawl", "--logfile", "/app/mydb/log.log"])
 
-            subprocess.run(['clear'])
+            print("\033[H", end="")
 
             last_row = db.get_last_row("statistics")
 
