@@ -10,21 +10,22 @@ import datetime
 import logging
 from fake_useragent import UserAgent
 
-warnings.filterwarnings("ignore", category=scrapy.exceptions.ScrapyDeprecationWarning)
+warnings.filterwarnings(
+    "ignore", category=scrapy.exceptions.ScrapyDeprecationWarning)
 
 db_path = "/app/mydb/test.db"
+
 
 class Database:
     def __init__(self, db_path):
         self.db_path = db_path
 
-
     def insert(self, table_name, data):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         cursor.execute("INSERT INTO {} ({}) VALUES ({})"
-                    .format(table_name, ",".join(data.keys()), ","
-                            .join(["?"]*len(data))), list(data.values()))
+                       .format(table_name, ",".join(data.keys()), ","
+                               .join(["?"]*len(data))), list(data.values()))
         conn.commit()
         conn.close()
 
@@ -35,7 +36,7 @@ class Database:
         row = cursor.fetchone()
         conn.close()
         return row[0]
-    
+
     def get_all_pages(self):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -61,19 +62,20 @@ class Database:
         conn.commit()
         conn.close()
         return row
-    
+
     def get_last_row(self, table_name):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM {} ORDER BY id DESC LIMIT 1".format(table_name))
+        cursor.execute(
+            "SELECT * FROM {} ORDER BY id DESC LIMIT 1".format(table_name))
         row = cursor.fetchone()
         conn.close()
         return row
-    
+
     def close(self):
         conn = sqlite3.connect(self.db_path)
         conn.close()
-    
+
     def create_db_table(self):
         import os
         # delete if db exists
@@ -119,6 +121,7 @@ class Database:
         conn.commit()
         conn.close()
 
+
 class Spider(scrapy.Spider):
     name = 'test_crawl'
     first_parse = True
@@ -126,52 +129,66 @@ class Spider(scrapy.Spider):
     ua = UserAgent()
     fake_user_agent = ua.random
 
-
     custom_settings = {
-        # 'LOG_LEVEL': logging.ERROR,  
-        # 'LOG_ENABLED': True,  
+        # 'LOG_LEVEL': logging.ERROR,
+        # 'LOG_ENABLED': True,
         "USER_AGENT": fake_user_agent
     }
 
     def start_requests(self):
+        """
+        This method is called before crawling starts.
+
+        It takes the first url from the to_be_crawled table and
+        sends a request to it.
+
+        It calls the parse method to process response.
+        """
         db = Database(db_path)
         url = db.get_first_row_and_delete("to_be_crawled")[1]
-        yield scrapy.Request(url=url, callback=self.parse, 
-        headers={'User-Agent': self.settings['USER_AGENT']})
+        yield scrapy.Request(url=url, callback=self.parse,
+                             headers={'User-Agent': self.settings['USER_AGENT']})
 
     def parse(self, response):
+        """
+        This method is called when a response is received.
+        """
         db = Database(db_path)
 
+        # extract all links from the response
         links = LinkExtractor(
-            allow_domains=['appleinsider.com'], 
+            allow_domains=['appleinsider.com'],
             allow=[
                 r'https:\/\/appleinsider.com.*',
                 r'https:\/\/www.appleinsider.com.*'
-                ],
+            ],
             unique=True).extract_links(response)
 
+        # get unique links
         links = set(link.url for link in links)
-
-        # get links that are not in all_pages
         links = links - db.get_all_pages()
 
+        # insert links into database
         for link in links:
             db.insert("all_pages", {"url": link})
             db.insert("to_be_crawled", {"url": link})
-        
+
         #####################
         # Extract keywords
         content_extract = self.extract_keywords(response)
         download_latency = response.meta.get('download_latency')
 
+        # get keywords, and time to process them
         keywords = content_extract["keywords"]
         duration = content_extract["duration"]
         start_time = content_extract["start_time"]
         end_time = content_extract["end_time"]
 
+        # insert keywords into database
         for keyword in keywords:
             db.insert("keywords", {"url": response.url, "keyword": keyword})
 
+        # insert statistics into database
         try:
             db.insert("pages", {"url": response.url})
             db.insert("statistics", {
@@ -190,12 +207,14 @@ class Spider(scrapy.Spider):
             pass
 
         return
-    
 
     def extract_keywords(self, response):
+        """
 
+        """
+
+        # extract article text
         text = self.extract_article(response)
-
         extra_start_time = datetime.datetime.now()
 
         data = []
@@ -205,11 +224,11 @@ class Spider(scrapy.Spider):
         else:
             text = text.lower()
             r = Rake(
-            min_length=1, 
-            max_length=3, 
-            language='english', 
-            include_repeated_phrases=False, 
-            ranking_metric=Metric.WORD_FREQUENCY,
+                min_length=1,
+                max_length=3,
+                language='english',
+                include_repeated_phrases=False,
+                ranking_metric=Metric.WORD_FREQUENCY,
             )
             r.extract_keywords_from_text(text)
             data = r.get_ranked_phrases()
@@ -222,17 +241,18 @@ class Spider(scrapy.Spider):
             "start_time": extra_start_time,
             "end_time": extra_end_time,
         }
-    
+
     def extract_meta_keywords(self, response):
         META_KEYWORDS_XPATH = r'//meta[@name="keywords"]/@content'
         keywords_str = response.xpath(META_KEYWORDS_XPATH).extract_first()
         return keywords_str.split(",") if keywords_str is not None else []
-    
+
     def extract_article(self, response):
         ARTICLE_XPATH = r'//*[@id="top-half-snap"]/div/div[1]/article/div/div//p/text()'
-        content = str(". ".join(response.xpath(ARTICLE_XPATH).getall())).strip()
+        content = str(". ".join(response.xpath(
+            ARTICLE_XPATH).getall())).strip()
         return content if content != "" else ""
-    
+
 
 if __name__ == '__main__':
     import subprocess
@@ -250,7 +270,8 @@ if __name__ == '__main__':
 
     try:
         while db.get_first("to_be_crawled"):
-            subprocess.run(["scrapy", "crawl", "test_crawl", "--logfile", "/app/mydb/log.log"])
+            subprocess.run(["scrapy", "crawl", "test_crawl",
+                           "--logfile", "/app/mydb/log.log"])
 
             print("\033[H", end="")
 
@@ -273,4 +294,3 @@ if __name__ == '__main__':
         print("Process interrupted by user.")
     finally:
         print("Cleaning up...")
-
